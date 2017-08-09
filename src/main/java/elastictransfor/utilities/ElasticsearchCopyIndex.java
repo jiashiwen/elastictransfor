@@ -16,12 +16,13 @@ import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
-import org.elasticsearch.search.sort.SortParseElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,14 +86,14 @@ public class ElasticsearchCopyIndex {
 		try {
 
 			SearchResponse scrollResp = sourceclient.prepareSearch(sourceindex)
-					.addSort(SortParseElement.DOC_FIELD_NAME, SortOrder.ASC).setScroll(new TimeValue(60000))
+					.addSort(FieldSortBuilder.DOC_FIELD_NAME, SortOrder.ASC).setScroll(new TimeValue(60000))
 					.setQuery(qb).setSize(500).execute().actionGet();
 
 			while (true) {
 				final BulkRequestBuilder bulkRequest = targetclient.prepareBulk();
 				for (SearchHit hit : scrollResp.getHits().getHits()) {
 					bulkRequest.add(targetclient.prepareIndex(targetindex, hit.getType().toString(), hit.getId())
-							.setSource(hit.getSourceAsString()));
+							.setSource(hit.getSourceAsString(),XContentType.JSON));
 					count++;
 				}
 
@@ -122,14 +123,14 @@ public class ElasticsearchCopyIndex {
 
 		try {
 			SearchResponse scrollResp = sourceclient.prepareSearch(sourceindex)
-					.addSort(SortParseElement.DOC_FIELD_NAME, SortOrder.ASC).setScroll(new TimeValue(60000))
+					.addSort(FieldSortBuilder.DOC_FIELD_NAME, SortOrder.ASC).setScroll(new TimeValue(60000))
 					.setQuery(wrapper).setSize(500).execute().actionGet();
 
 			while (true) {
 				final BulkRequestBuilder bulkRequest = targetclient.prepareBulk();
 				for (SearchHit hit : scrollResp.getHits().getHits()) {
 					bulkRequest.add(targetclient.prepareIndex(targetindex, hit.getType().toString(), hit.getId())
-							.setSource(hit.getSourceAsString()));
+							.setSource(hit.getSourceAsString(),XContentType.JSON));
 					count++;
 				}
 

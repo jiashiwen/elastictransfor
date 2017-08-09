@@ -4,9 +4,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 /**
  * Created by Jia Shiwen.
@@ -19,6 +19,8 @@ public class ElasticsearchConnector {
 	private String clustername;
 	private String host;
 	private int port;
+
+	private PreBuiltTransportClient preBuiltTransportClient;
 
 	public String getClustername() {
 		return clustername;
@@ -53,9 +55,11 @@ public class ElasticsearchConnector {
 	}
 
 	public void initClient() throws UnknownHostException {
-		Settings setting = Settings.settingsBuilder().put("cluster.name", clustername).build();
-		client = TransportClient.builder().settings(setting).build()
-				.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port));
+		Settings setting = Settings.builder().put("cluster.name", clustername).build();
+		preBuiltTransportClient = new PreBuiltTransportClient(setting);
+		client = preBuiltTransportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port));
+	
+
 	}
 
 	public Client getClient() {
